@@ -36,7 +36,7 @@ object HikariCP {
             existing.close()
         }
         val ds = HikariDataSource(config)
-        pools.put(name, ds)
+        pools[name] = ds
         return ds
     }
 
