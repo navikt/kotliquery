@@ -1,0 +1,45 @@
+package kotliquery
+
+import kotliquery.action.ExecuteQueryAction
+import kotliquery.action.ResultQueryActionBuilder
+import kotliquery.action.UpdateAndReturnGeneratedKeyQueryAction
+import kotliquery.action.UpdateQueryAction
+
+/**
+ * Database Query.
+ */
+data class Query(
+    val statement: String,
+    val params: List<Any?> = listOf(),
+    val paramMap: Map<String, Any?> = mapOf(),
+) {
+    val replacementMap: Map<String, List<Int>> = extractNamedParamsIndexed(statement)
+    val cleanStatement: String = replaceNamedParams(statement)
+
+    private fun replaceNamedParams(stmt: String): String = regex.replace(stmt, "?")
+
+    fun <A> map(extractor: (Row) -> A?): ResultQueryActionBuilder<A> = ResultQueryActionBuilder(this, extractor)
+
+    val asUpdate: UpdateQueryAction by lazy {
+        UpdateQueryAction(this)
+    }
+
+    val asUpdateAndReturnGeneratedKey: UpdateAndReturnGeneratedKeyQueryAction by lazy {
+        UpdateAndReturnGeneratedKeyQueryAction(this)
+    }
+
+    val asExecute: ExecuteQueryAction by lazy {
+        ExecuteQueryAction(this)
+    }
+
+    companion object {
+        private val regex = Regex("""(?<!:):(?!:)[a-zA-Z]\w+""")
+
+        internal fun extractNamedParamsIndexed(stmt: String): Map<String, List<Int>> =
+            regex
+                .findAll(stmt)
+                .mapIndexed { index, group ->
+                    Pair(group, index)
+                }.groupBy({ it.first.value.substring(1) }, { it.second })
+    }
+}

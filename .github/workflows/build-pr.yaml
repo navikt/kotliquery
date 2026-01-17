@@ -1,0 +1,27 @@
+name: Build & test PR
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release/**'
+    paths-ignore:
+      - '**.md'
+      - 'LICENCE'
+      - 'CODEOWNERS'
+      - '.gitignore'
+      - '.scripts'
+      - 'dokumentasjon/**'
+      - '.github/workflows/build-publish.yaml'
+      - '.github/workflows/codeql-scan.yaml'
+      - '.github/workflows/release.yaml'
+      - '.github/dependabot.yaml'
+
+jobs:
+  build-and-test:
+    permissions:
+      contents: read
+    name: Build and test
+    uses: navikt/mob-gha-workflows/.github/workflows/gradle-build-test-app.yaml@main
+    with:
+      gradle-task: './gradlew clean build --configuration-cache'
