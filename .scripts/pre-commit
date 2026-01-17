@@ -1,0 +1,75 @@
+#!/bin/bash
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+LINE_WIDTH=59
+
+center() {
+  local input="$1"
+  local pad=$(( (LINE_WIDTH - ${#input}) / 2 ))
+  printf "%*s%s%*s\n" "$pad" "" "$input" "$pad" ""
+}
+
+echo -e "${GREEN}$(printf '%*s' "$LINE_WIDTH" '' | tr ' ' '*')${NC}"
+center "Running git pre-commit hook.."
+echo -e "${GREEN}$(printf '%*s' "$LINE_WIDTH" '' | tr ' ' '*')${NC}"
+echo ""
+
+
+stagedFiles=$(git diff --staged --name-only)
+
+# Run ktlintCheck
+./gradlew ktlintCheck
+ktlintCheckStatus=$?
+
+if [ "$ktlintCheckStatus" = 0 ] ; then
+    echo ""
+    echo -e "${GREEN}$(printf '%*s' "$LINE_WIDTH" '' | tr ' ' '*')${NC}"
+    center "Ktlint - no violations found"
+    echo -e "${GREEN}$(printf '%*s' "$LINE_WIDTH" '' | tr ' ' '*')${NC}"
+    echo ""
+
+    for file in $stagedFiles; do
+      if test -f "$file"; then
+        git add $file
+      fi
+    done
+    exit 0
+else
+    echo ""
+    echo -e "${YELLOW}$(printf '%*s' "$LINE_WIDTH" '' | tr ' ' '*')${NC}"
+    center "Ktlint - found violations"
+    center "Running ktlintFormat to fix issues..."
+    echo -e "${YELLOW}$(printf '%*s' "$LINE_WIDTH" '' | tr ' ' '*')${NC}"
+    echo ""
+
+    ./gradlew ktlintFormat
+    ./gradlew ktlintCheck
+    ktlintCheckStatus=$?
+
+    if [ "$ktlintCheckStatus" = 0 ] ; then
+        echo ""
+        echo -e "${GREEN}$(printf '%*s' "$LINE_WIDTH" '' | tr ' ' '*')${NC}"
+        center "Ktlint - issues fixed"
+        echo -e "${GREEN}$(printf '%*s' "$LINE_WIDTH" '' | tr ' ' '*')${NC}"
+        echo ""
+
+        for file in $stagedFiles; do
+          if test -f "$file"; then
+            git add $file
+          fi
+        done
+        exit 0
+    else
+        echo ""
+        echo -e "${RED}$(printf '%*s' "$LINE_WIDTH" '' | tr ' ' '*')${NC}"
+        center "Ktlint - found violations it could not fix."
+        center "Fix the issues before trying to commit again."
+        echo -e "${RED}$(printf '%*s' "$LINE_WIDTH" '' | tr ' ' '*')${NC}"
+        echo ""
+        exit 1
+    fi
+fi

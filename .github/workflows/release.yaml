@@ -1,0 +1,136 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  auto-tag:
+    name: Auto-tag on release branch merge
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # ratchet:step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Generate GitHub App Token
+        id: generate_token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # ratchet:actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # ratchet:actions/checkout@v6
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: false
+
+      - name: Validate version format
+        run: |
+          VERSION=$(grep '^version = ' build.gradle.kts | cut -d'"' -f2)
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Version '$VERSION' must follow format x.x.x (only numbers allowed)"
+            exit 1
+          fi
+          echo "Version $VERSION is valid"
+
+      - name: Extract version and create tag
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          APP_SLUG: ${{ steps.generate_token.outputs.app-slug }}
+        run: |
+          VERSION=$(grep '^version = ' build.gradle.kts | cut -d'"' -f2)
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git "v$VERSION"
+
+  release:
+    name: Create Release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # ratchet:step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - name: Generate GitHub App Token
+        id: generate_token
+        uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # ratchet:actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # ratchet:actions/checkout@v6
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify tag matches version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          GRADLE_VERSION=$(grep '^version = ' build.gradle.kts | cut -d'"' -f2)
+          [ "$TAG_VERSION" = "$GRADLE_VERSION" ] || { echo "Version mismatch: $TAG_VERSION != $GRADLE_VERSION"; exit 1; }
+
+      - name: Generate release notes from release branch PRs
+        id: release_notes
+        env:
+          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          RELEASE_BRANCH="release/${GITHUB_REF_NAME#v}"
+          
+          # Find all PRs merged to the release branch
+          PR_DATA=$(gh pr list \
+            --base "$RELEASE_BRANCH" \
+            --state merged \
+            --json number,title,author \
+            --jq '.[] | "\(.number)|\(.title)|\(.author.login)"')
+          
+          if [ -z "$PR_DATA" ]; then
+            echo "notes_body=No changes in this release" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Build PR list (all PRs, no filtering)
+          PR_LIST=""
+          while IFS='|' read -r NUMBER TITLE AUTHOR; do
+            PR_LIST="${PR_LIST}* ${TITLE} (#${NUMBER}) @${AUTHOR}\n"
+          done <<< "$PR_DATA"
+          
+          # Build release notes
+          NOTES="## Changelog\n\n${PR_LIST}\n"
+          NOTES="${NOTES}**Full Changelog**: https://github.com/${{ github.repository }}/commits/${GITHUB_REF_NAME}"
+          
+          echo "notes_body<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # ratchet:softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.release_notes.outputs.notes_body }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          token: ${{ steps.generate_token.outputs.token }}
+
