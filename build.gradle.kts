@@ -9,7 +9,7 @@ plugins {
     `maven-publish`
 }
 
-group = "nav.no"
+group = "no.nav"
 version = "2.0.1"
 
 repositories {
