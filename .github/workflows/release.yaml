@@ -15,7 +15,7 @@ permissions: {}
 jobs:
   auto-tag:
     name: Auto-tag on release branch merge
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/') && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
