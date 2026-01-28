@@ -112,9 +112,13 @@ jobs:
             exit 0
           fi
           
-          # Build PR list (all PRs, no filtering)
+          # Build PR list (filter out reverted PRs)
           PR_LIST=""
           while IFS='|' read -r NUMBER TITLE AUTHOR; do
+            # Skip PRs with [REVERTED] in the title
+            if [[ "$TITLE" == *"[REVERTED]"* ]]; then
+              continue
+            fi
             PR_LIST="${PR_LIST}* ${TITLE} (#${NUMBER}) @${AUTHOR}\n"
           done <<< "$PR_DATA"
           
