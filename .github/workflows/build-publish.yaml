@@ -2,14 +2,8 @@ name: Build & Publish
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'src/**'
-      - 'build.gradle.kts'
-      - 'gradle.properties'
-      - 'settings.gradle.kts'
-      - 'gradle/**'
+    tags:
+      - 'v*'  # Trigges kun når du lager tags som starter med 'v' (f.eks. v2.0.1)
 
 permissions: {}
 
