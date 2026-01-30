@@ -230,7 +230,8 @@ Siden dette biblioteket har noen bestemte meninger, er transaksjoner kun tilgjen
 
 ## Dokumentasjon
 
-- **[Vedlikehold](dokumentasjon/vedlikehold.md)** - Hvordan bidra til prosjektet?
+- **[Vedlikehold](dokumentasjon/vedlikehold.md)** - Hvordan lage releases og vedlikeholde prosjektet
+- **[Release Quick Start](dokumentasjon/release-quick-start.md)** - Rask guide for å lage en ny release
 
 ## Spørsmål
 

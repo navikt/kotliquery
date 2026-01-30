@@ -3,20 +3,20 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.3.0"
+    kotlin("jvm") version "2.2.21"
     id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
     id("org.jetbrains.kotlinx.kover") version "0.9.4"
     `maven-publish`
 }
 
 group = "no.nav"
-version = "2.0.0"
+version = System.getenv("GITHUB_REF_NAME")?.removePrefix("v") ?: "SNAPSHOT"
 
 repositories {
     mavenCentral()
 }
 
-val kotlinVersion = "2.3.0"
+val kotlinVersion = "2.2.21"
 val slf4jApiVersion = "2.0.17"
 val hikariCpVersion = "7.0.2"
 val junit5Version = "6.0.2"
