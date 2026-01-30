@@ -133,4 +133,3 @@ jobs:
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
           token: ${{ steps.generate_token.outputs.token }}
-
