@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "no.nav"
-version = "2.0.0"
+version = System.getenv("GITHUB_REF_NAME")?.removePrefix("v") ?: "SNAPSHOT"
 
 repositories {
     mavenCentral()

@@ -1,271 +1,181 @@
-# Vedlikeholdsguide
+# Vedlikehold av KotliQuery
 
-Hvordan bidra til KotliQuery.
+## 🚀 Hvordan lage en release
 
-## Git-strategi
-
-### Branch-naming
-
-Bruk beskrivende prefix:
+### Enkel prosess:
 
 ```bash
-release/2.0.5                # Release branches
-feature/add-batch-insert     # Nye features
-fix/connection-leak          # Bugfixes
-bugfix/null-pointer          # Bugfixes
-docs/update-readme           # Dokumentasjon
-chore/upgrade-kotlin         # Vedlikehold
-refactor/simplify-query      # Refaktorering
-cleanup/remove-deprecated    # Rydding
-deps/update-hikari           # Dependencies
-dependabot/...               # Dependabot PRs
+# 1. Sørg for at main er oppdatert
+git checkout main
+git pull origin main
+
+# 2. Lag en Git tag (versjonsnummer styrer alt)
+git tag v2.0.3
+
+# 3. Push taggen
+git push origin v2.0.3
+
+# 4. Ferdig! ✅
 ```
 
-### Release notes
+**Hva skjer automatisk:**
+- ✅ Koden bygges og testes
+- ✅ Pakke publiseres til GitHub Packages som `kotliquery-2.0.3.jar`
+- ✅ GitHub Release opprettes med tittel `v2.0.3`
+- ✅ Release notes genereres automatisk fra commits
 
-Release notes viser **kun PR-titler** fra PRs merged til release branchen:
+**Viktig:** Versjonsnummeret hentes fra taggen (ikke hardkodet noe sted).
 
-**Hvordan det fungerer:**
-- Squash merge samler alle commits i én PR
-- Kun PR-tittelen vises i release notes
-- Individuelle commits vises ikke (ingen filtrering nødvendig)
-- Bump commit PR vises heller ikke siden den merges direkte til release
+---
 
-**Eksempel:**
+## 🗑️ Slette release hvis noe går galt
+
+### Scenario 1: Release feilet under bygging
+
+```bash
+# Slett taggen lokalt
+git tag -d v2.0.3
+
+# Slett taggen remote
+git push origin :refs/tags/v2.0.3
+
+# Fiks problemet, deretter lag taggen på nytt
+git tag v2.0.3
+git push origin v2.0.3
+```
+
+### Scenario 2: Release ble opprettet, men er feil
+
+```bash
+# 1. Slett GitHub Release i GitHub UI:
+#    Gå til: https://github.com/navikt/kotliquery/releases
+#    Klikk på release → "Delete release" (øverst til høyre)
+
+# 2. Slett taggen
+git tag -d v2.0.3
+git push origin :refs/tags/v2.0.3
+
+# 3. Fiks problemet, lag taggen på nytt
+git tag v2.0.3
+git push origin v2.0.3
+```
+
+### Scenario 3: Pakke ble publisert med feil versjon
+
+**Problem:** Kan ikke overskrive pakker i GitHub Packages.
+
+**Løsning:** Lag en ny patch-versjon (f.eks. `v2.0.4`) med fiksen.
+
+---
+
+## 📝 Release notes - Hva vises?
+
+### Hva genereres automatisk:
+
+Release notes viser **alle commits** mellom forrige tag og ny tag:
 
 ```markdown
-## Changelog
+## What's Changed
 
-* Add batch insert support (#42) @username
-* Fix connection leak in HikariCP (#43) @username
-* Upgrade Kotlin to 2.0.5 (#44) @username
+* Bump kotlin from 2.3.0 to 2.3.1 (abc123)
+* Fix memory leak in connection pool (def456)
+* Add support for batch queries (ghi789)
 
-**Full Changelog**: https://github.com/navikt/kotliquery/commits/v2.0.5
+**Full Changelog**: https://github.com/navikt/kotliquery/compare/v2.0.2...v2.0.3
 ```
 
-**Viktig:** PR-tittelen er det som vises, så bruk beskrivende titler!
+### ✅ Beste praksis for commit-meldinger:
+
+**Bra commits (tydelige):**
+- ✅ `Bump kotlin from 2.3.0 to 2.3.1`
+- ✅ `Fix memory leak in connection pool`
+- ✅ `Add support for batch queries`
+- ✅ `Remove deprecated session methods`
+
+**Dårlige commits (utydelige):**
+- ❌ `Update stuff`
+- ❌ `Fix bug`
+- ❌ `WIP`
+- ❌ `asdfsadf`
+
+**Hvorfor dette er viktig:**
+- Commit-meldinger vises **direkte** i release notes
+- Brukere ser disse når de vurderer å oppgradere
+- God historikk gjør det lettere å finne endringer senere
+
+### 💡 Tips for bedre release notes:
+
+1. **Bruk PR-titler som commit-meldinger**
+   - Squash & merge PRs med god tittel
+   - PR-tittelen blir commit-meldingen
+
+2. **Følg en konvensjon:**
+   - `feat: Add new feature` (nye features)
+   - `fix: Fix bug description` (bug fixes)
+   - `chore: Update dependencies` (vedlikehold)
+   - `docs: Update README` (dokumentasjon)
+
+3. **Dependabot uten grouping:**
+   - Hver dependency får sin egen PR
+   - Hver oppdatering vises som egen linje i notes
+   - Bedre oversikt over hva som ble oppdatert
 
 ---
 
-## Lage en release
+## 🔧 Versjonering
 
-### 1. Opprett release branch fra main
+Vi følger [Semantic Versioning](https://semver.org/):
 
-```bash
-git checkout main
-git pull origin main
-git checkout -b release/2.0.5
-```
-
-**Viktig:** Branch-navn MÅ matche versjonsnummer (format: `x.x.x` - kun tall)!
-
-### 2. Bump versjon
-
-Rediger `build.gradle.kts`:
-
-```kotlin
-version = "2.0.5"  // Samme som branch-navn! Kun tall: x.x.x
-```
-
-**Validering:** Versjonsformatet valideres automatisk ved merge til main.
-- ✅ `2.0.5` - godkjent
-- ❌ `2.0.5-SNAPSHOT` - feiler
-- ❌ `v2.0.5` - feiler
-- ❌ `2.0` - feiler (må ha tre tall)
-
-```bash
-git add build.gradle.kts
-git commit -m "bump kotliquery to 2.0.5"
-git push origin release/2.0.5
-```
-
-### 3. Merge features til release branch
-
-For hver feature/fix/chore som skal med i releasen:
-
-```bash
-# Branch ut FRA main
-git checkout main
-git pull origin main
-git checkout -b feature/my-feature
-
-# ELLER bugfix/chore/etc
-git checkout -b bugfix/fix-connection-leak
-git checkout -b chore/upgrade-kotlin
-
-# Gjør endringer
-git add .
-git commit -m "Add batch insert support"  # ✅ Beskrivende!
-git push origin feature/my-feature
-```
-
-**Opprett PR:** `feature/my-feature` → `release/2.0.5`
-
-**Merge:** Velg **"Squash and merge"** ✅
-
-**Hvorfor squash?** 
-- En ren commit per feature
-- PR-tittel blir commit-melding
-- Overskuelig historikk
-- Vises i release notes
-
-### 4. Merge release til main
-
-**Opprett PR:** `release/2.0.5` → `main`
-
-**Merge:** Velg **"Squash and merge"** ✅
-
-**Hvorfor squash?**
-- Konsistent strategi hele veien
-- Ryddig historikk i main
-- Release notes viser fortsatt alle PRs som ble merged til release
-
-### 5. Automatisk release
-
-Når release-PR merges til main:
-1. Versjon valideres (må være `x.x.x` format)
-2. Tag `v2.0.5` opprettes automatisk
-3. Release notes genereres med alle PRs merged til release branch
-4. Publiseres til GitHub Packages
-
----
-
-## Commit-meldinger og PR-titler
-
-**Viktig:** Kun **PR-titler** vises i release notes, ikke individuelle commits!
-
-### ✅ Gode PR-titler:
-
-```
-Add batch insert support
-Fix connection leak in HikariCP
-Update README with new examples
-Upgrade Kotlin to 2.0.5
-```
-
-### ❌ Dårlige PR-titler:
-
-```
-fix                    # Hva ble fikset?
-wip                    # Ikke beskrivende
-update                 # Hva ble oppdatert?
-PR from feature branch # 🤦
-```
-
-**Tips for commits:**
-- Du kan bruke flere commits i en PR (squashes til én)
-- Commit-meldinger vises ikke i release notes
-- Fokuser på god PR-tittel!
-
-**Tips:** PR-tittelen leses i release notes om 6 måneder - gjør den beskrivende!
-
----
-
-## Merge-strategi oppsummering
-
-| Fra → Til | Merge type | Hvorfor |
-|-----------|------------|---------|
-| `feature/*`, `bugfix/*`, `chore/*` → `release/*` | **Squash merge** | Ryddig historikk, én PR per feature |
-| `release/*` → `main` | **Squash merge** | Konsistent hele veien, ryddig main-historikk |
-
-**Viktig:** Release notes genereres fra **PR-titler** merged til release branch, ikke fra commit-historikk.
-
-**Hvorfor vises ikke bump commit?** 
-- Bump commit pushes direkte til release branch (ikke via PR)
-- Kun PRs vises i release notes
----
-
-## Versjonering
-
-Følg [Semantic Versioning](https://semver.org/):
-
-```
-MAJOR.MINOR.PATCH
-
-2.0.5
-│ │ └─ Patch: Bugfixes, ingen breaking changes
-│ └─── Minor: Nye features, bakoverkompatibel
-└───── Major: Breaking changes
-```
+- **Major** (`v3.0.0`) - Breaking changes (inkompatible endringer)
+- **Minor** (`v2.1.0`) - Nye features (bakoverkompatible)
+- **Patch** (`v2.0.1`) - Bug fixes (bakoverkompatible)
 
 **Eksempler:**
-- `2.0.5` → `2.0.6` - Bugfix
-- `2.0.6` → `2.1.0` - Ny feature
-- `2.1.0` → `3.0.0` - Breaking change
+```bash
+# Bug fix
+git tag v2.0.4
+
+# Ny feature
+git tag v2.1.0
+
+# Breaking change
+git tag v3.0.0
+```
+
+## 📋 Sjekkliste før release
+
+Før du lager en ny release:
+
+- [ ] Alle tester passerer på `main`
+- [ ] Alle ønskede PRs er merget
+- [ ] README er oppdatert (hvis nødvendig)
+- [ ] Breaking changes er dokumentert (hvis major version)
+- [ ] Lokal bygg fungerer: `./gradlew clean build`
 
 ---
 
-## Testing
+## ❓ Feilsøking
 
-### Lokalt
+### Problem: "Failed to publish - 409 Conflict"
 
-```bash
-./gradlew clean build
-./gradlew test
-```
+**Årsak:** Prøver å publisere en versjon som allerede eksisterer.
 
-### I PR
+**Løsning:** Lag en ny versjon (f.eks. `v2.0.4` i stedet for `v2.0.3`).
 
-Workflows kjører automatisk:
-- `build-pr.yaml` - Bygger og tester
+### Problem: Release notes er tomme
 
-Sjekk at alt er grønt før merge!
+**Årsak:** Ingen commits mellom forrige tag og ny tag.
 
----
+**Løsning:** Dette er normalt hvis det ikke har vært noen endringer. Ikke lag en release uten endringer.
 
-## Vanlige problemer
+### Problem: Workflow trigges ikke
 
-### Problem: Release notes er tomme eller mangler PRs
+**Årsak:** Tag matcher ikke pattern `v*`.
 
-**Årsak:** 
-- PRs ble ikke merged til release branch
-- PRs ble merged etter at release ble tagget
-
-**Løsning:** 
-- Sørg for at alle features/bugfixes squash merges til release branch FØR release merges til main
-- Cherry-pick til neste release eller lag hotfix
-
-
-### Problem: Feil versjon i tag
-
-**Årsak:** Versjon i `build.gradle.kts` matcher ikke branch-navn eller har feil format
-
-**Løsning:**
-```bash
-# Slett feil tag
-git tag -d v2.0.5
-git push origin :refs/tags/v2.0.5
-
-# Fix versjon (må være x.x.x format) og prøv igjen
-```
-
-### Problem: Versjon-validering feiler
-
-**Årsak:** Versjonen i `build.gradle.kts` følger ikke `x.x.x` formatet
-
-**Løsning:**
-- ✅ Bruk: `version = "2.0.5"`
-- ❌ Ikke: `version = "2.0.5-SNAPSHOT"`
-- ❌ Ikke: `version = "v2.0.5"`
+**Løsning:** Tags må starte med `v` (f.eks. `v2.0.3`, ikke `2.0.3`).
 
 ---
 
-## Dokumentasjonsendringer
+## 💬 Spørsmål?
 
-Dokumentasjon kan merges direkte til `main`:
-
-```bash
-git checkout main
-git checkout -b docs/update-readme
-
-# Gjør endringer
-git add .
-git commit -m "Update README with new examples"
-git push origin docs/update-readme
-```
-
-**Opprett PR:** `docs/*` → `main` (direkte!)
-
-**Merge:** Squash merge (samme som alle andre PRs)
-
-**Resultat:** Ingen release trigges, kun dokumentasjon oppdateres.
+Spørsmål knyttet til vedlikehold kan stilles i Slack-kanalen [#kotliquery-maintainers](https://nav-it.slack.com/archives/C0A97T61BTN).

@@ -39,11 +39,54 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
 
-      - name: Publish to GitHub Packages
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@4d9f0ba0025fe599b4ebab900eb7f3a1d93ef4c2 # ratchet:gradle/actions/setup-gradle@v5
         with:
           cache-disabled: true
-      - run: ./gradlew publish
+
+      - name: Publish to GitHub Packages
         env:
-          GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew publish
+
+  create-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # ratchet:step-security/harden-runner@v2
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # ratchet:actions/checkout@v6
+        with:
+          fetch-depth: 0  # Henter all historikk for å kunne sammenligne tags
+          persist-credentials: false
+
+      - name: Generate Release Notes
+        id: release_notes
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${REF_NAME}"^ 2>/dev/null || echo "")
+          
+          NOTES="## What's Changed\n\n"
+          NOTES="${NOTES}$(git log "${PREVIOUS_TAG}..${REF_NAME}" --pretty=format:'* %s (%h)' --reverse)\n\n"
+          NOTES="${NOTES}**Full Changelog**: https://github.com/${REPO}/compare/${PREVIOUS_TAG}...${REF_NAME}"
+          
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
+          RELEASE_NOTES: ${{ steps.release_notes.outputs.notes }}
+        run: |
+          gh release create "${REF_NAME}" \
+            --title "${REF_NAME}" \
+            --notes "${RELEASE_NOTES}"

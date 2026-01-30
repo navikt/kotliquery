@@ -2,9 +2,6 @@ name: Build & test PR
 
 on:
   pull_request:
-    branches:
-      - main
-      - 'release/**'
     paths-ignore:
       - '**.md'
       - 'LICENCE'
