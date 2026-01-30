@@ -100,27 +100,48 @@ jobs:
         run: |
           RELEASE_BRANCH="release/${GITHUB_REF_NAME#v}"
           
-          # Find all PRs merged to the release branch
-          PR_DATA=$(gh pr list \
-            --base "$RELEASE_BRANCH" \
-            --state merged \
-            --json number,title,author \
-            --jq '.[] | "\(.number)|\(.title)|\(.author.login)"')
+          # Hent forrige tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # Første release - vis alle PRs til denne release-branchen
+            PR_DATA=$(gh pr list \
+              --base "$RELEASE_BRANCH" \
+              --state merged \
+              --json number,title,author \
+              --jq '.[] | "\(.number)|\(.title)|\(.author.login)"')
+          else
+            # Finn PRs merget til release-branchen ETTER forrige tag
+            PREVIOUS_TAG_DATE=$(git log -1 --format=%aI $PREVIOUS_TAG)
+            
+            PR_DATA=$(gh pr list \
+              --base "$RELEASE_BRANCH" \
+              --state merged \
+              --json number,title,author,mergedAt \
+              --jq --arg date "$PREVIOUS_TAG_DATE" \
+                '[.[] | select(.mergedAt > $date)] | 
+                 sort_by(.mergedAt) | 
+                 .[] | "\(.number)|\(.title)|\(.author.login)"')
+          fi
           
           if [ -z "$PR_DATA" ]; then
             echo "notes_body=No changes in this release" >> $GITHUB_OUTPUT
             exit 0
           fi
           
-          # Build PR list (all PRs, no filtering)
+          # Build PR list
           PR_LIST=""
           while IFS='|' read -r NUMBER TITLE AUTHOR; do
             PR_LIST="${PR_LIST}* ${TITLE} (#${NUMBER}) @${AUTHOR}\n"
           done <<< "$PR_DATA"
           
-          # Build release notes
+          # Build release notes med sammenligning
           NOTES="## Changelog\n\n${PR_LIST}\n"
-          NOTES="${NOTES}**Full Changelog**: https://github.com/${{ github.repository }}/commits/${GITHUB_REF_NAME}"
+          if [ -n "$PREVIOUS_TAG" ]; then
+            NOTES="${NOTES}**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${GITHUB_REF_NAME}"
+          else
+            NOTES="${NOTES}**Full Changelog**: https://github.com/${{ github.repository }}/commits/${GITHUB_REF_NAME}"
+          fi
           
           echo "notes_body<<EOF" >> $GITHUB_OUTPUT
           echo -e "$NOTES" >> $GITHUB_OUTPUT

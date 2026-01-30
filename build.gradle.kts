@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "no.nav"
-version = "2.0.1"
+version = "2.0.0"
 
 repositories {
     mavenCentral()
@@ -40,7 +40,7 @@ dependencies {
 
 kotlin {
     jvmToolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 
@@ -65,6 +65,14 @@ tasks {
         finalizedBy(koverHtmlReport)
     }
 
+    withType<Wrapper> {
+        gradleVersion = "9.3.0"
+    }
+
+    ("build") {
+        dependsOn("copyPreCommitHook")
+    }
+
     register<Copy>("copyPreCommitHook") {
         from(".scripts/pre-commit")
         into(".git/hooks")
@@ -82,10 +90,6 @@ tasks {
         description = "Copy pre-commit hook to .git/hooks"
         group = "git hooks"
         outputs.upToDateWhen { false }
-    }
-
-    ("build") {
-        dependsOn("copyPreCommitHook")
     }
 }
 
