@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "2.3.0"
     id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
-    id("org.jetbrains.kotlinx.kover") version "0.9.4"
+    id("org.jetbrains.kotlinx.kover") version "0.9.5"
     `maven-publish`
 }
 
@@ -22,7 +22,7 @@ val hikariCpVersion = "7.0.2"
 val junit5Version = "6.0.2"
 val kotlinxCoroutinesVersion = "1.8.1"
 val h2DatabaseVersion = "2.4.240"
-val logbackClassicVersion = "1.5.25"
+val logbackClassicVersion = "1.5.27"
 val kotlinxCoroutinesCoreVersion = "1.10.2"
 
 dependencies {
@@ -66,7 +66,7 @@ tasks {
     }
 
     withType<Wrapper> {
-        gradleVersion = "9.3.0"
+        gradleVersion = "9.3.1"
     }
 
     ("build") {
