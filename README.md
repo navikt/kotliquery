@@ -8,6 +8,10 @@ KotliQuery er et praktisk RDB-klientbibliotek for Kotlin-utviklere! Designet er 
 
 Dette biblioteket gjør det enklere å bruke JDBC, men målet vårt er ikke å skjule alt ved JDBC.
 
+## Takk
+
+Dette biblioteket er en fork av av [seratch](https://github.com/seratch) sin [KotliQuery](https://github.com/seratch/kotliquery).
+
 ## Kom i gang
 
 Du kan enkelt legge til KotliQuery i ditt prosjekt, enten du bruker Maven eller Gradle.
