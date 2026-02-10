@@ -22,7 +22,7 @@ Legg til følgende avhengighet i `build.gradle.kts` eller `build.gradle`:
 
 ```kotlin
 dependencies {
-    implementation("no.nav.kotliquery:kotliquery:2.0.0")
+    implementation("no.nav:kotliquery:2.0.0")
 }
 ```
 
@@ -32,7 +32,7 @@ Legg til følgende i `pom.xml`:
 
 ```xml
 <dependency>
-    <groupId>no.nav.kotliquery</groupId>
+    <groupId>no.nav</groupId>
     <artifactId>kotliquery</artifactId>
     <version>2.0.0</version>
 </dependency>
