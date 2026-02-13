@@ -32,7 +32,7 @@ jobs:
           distribution: "temurin"
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # ratchet:github/codeql-action/init@v3
+        uses: github/codeql-action/init@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # ratchet:github/codeql-action/init@v3
         with:
           languages: kotlin
           queries: security-extended,security-and-quality
@@ -54,9 +54,9 @@ jobs:
         shell: bash
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # ratchet:github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # ratchet:github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # ratchet:github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@45cbd0c69e560cd9e7cd7f8c32362050c9b7ded2 # ratchet:github/codeql-action/analyze@v3
         with:
           category: "/language:kotlin"
