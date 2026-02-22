@@ -65,10 +65,6 @@ tasks {
         finalizedBy(koverHtmlReport)
     }
 
-    withType<Wrapper> {
-        gradleVersion = "9.3.1"
-    }
-
     ("build") {
         dependsOn("copyPreCommitHook")
     }
