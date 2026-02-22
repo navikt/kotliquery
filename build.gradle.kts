@@ -22,7 +22,7 @@ val hikariCpVersion = "7.0.2"
 val junit5Version = "6.0.3"
 val kotlinxCoroutinesVersion = "1.8.1"
 val h2DatabaseVersion = "2.4.240"
-val logbackClassicVersion = "1.5.29"
+val logbackClassicVersion = "1.5.31"
 val kotlinxCoroutinesCoreVersion = "1.10.2"
 
 dependencies {
