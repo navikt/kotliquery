@@ -16,7 +16,7 @@ repositories {
     mavenCentral()
 }
 
-val kotlinVersion = "2.3.0"
+val kotlinVersion = "2.3.10"
 val slf4jApiVersion = "2.0.17"
 val hikariCpVersion = "7.0.2"
 val junit5Version = "6.0.3"
