@@ -3,9 +3,9 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.3.0"
+    kotlin("jvm") version "2.3.10"
     id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
-    id("org.jetbrains.kotlinx.kover") version "0.9.5"
+    id("org.jetbrains.kotlinx.kover") version "0.9.7"
     `maven-publish`
 }
 
@@ -19,10 +19,10 @@ repositories {
 val kotlinVersion = "2.3.10"
 val slf4jApiVersion = "2.0.17"
 val hikariCpVersion = "7.0.2"
-val junit5Version = "6.0.2"
+val junit5Version = "6.0.3"
 val kotlinxCoroutinesVersion = "1.8.1"
 val h2DatabaseVersion = "2.4.240"
-val logbackClassicVersion = "1.5.27"
+val logbackClassicVersion = "1.5.31"
 val kotlinxCoroutinesCoreVersion = "1.10.2"
 
 dependencies {
@@ -63,10 +63,6 @@ tasks {
         reports.forEach { report -> report.required.value(false) }
 
         finalizedBy(koverHtmlReport)
-    }
-
-    withType<Wrapper> {
-        gradleVersion = "9.3.1"
     }
 
     ("build") {
