@@ -190,10 +190,28 @@ class DataTypesTest {
         override fun sqlValue() = id
     }
 
-    fun testStringSqlValued() {
+    @Test
+    fun testLongSqlValued() {
         val value = FooId(1L)
         insertAndAssert(long = value) { row ->
             assertEquals(value.id, row.long("val_long"))
+        }
+    }
+
+    enum class Bar(
+        val kode: String,
+    ) : SqlValued<String> {
+        A("A"),
+        ;
+
+        override fun sqlValue() = kode
+    }
+
+    @Test
+    fun testStringSqlValued() {
+        val value = Bar.A
+        insertAndAssert(string = value) { row ->
+            assertEquals(value.kode, row.string("val_string"))
         }
     }
 }
