@@ -36,7 +36,9 @@ class DataTypesTest {
                         val_ts timestamp,
                         val_date date,
                         val_time time,
-                        val_uuid uuid
+                        val_uuid uuid,
+                        val_long long,
+                        val_string varchar(255)
                     );
                     """.trimIndent(),
                 ),
@@ -50,6 +52,8 @@ class DataTypesTest {
         date: Any? = null,
         time: Any? = null,
         uuid: Any? = null,
+        long: Any? = null,
+        string: Any? = null,
         assertRowFn: (Row) -> Unit,
     ) {
         sessionOf(testDataSource).use { session ->
@@ -58,8 +62,8 @@ class DataTypesTest {
             session.execute(
                 queryOf(
                     """
-                    insert into session_test (val_tstz, val_ts, val_date, val_time, val_uuid) 
-                        values (:tstz, :ts, :date, :time, :uuid);
+                    insert into session_test (val_tstz, val_ts, val_date, val_time, val_uuid, val_long, val_string) 
+                        values (:tstz, :ts, :date, :time, :uuid, :long, :string);
                     """.trimIndent(),
                     mapOf(
                         "tstz" to tstz,
@@ -67,6 +71,8 @@ class DataTypesTest {
                         "date" to date,
                         "time" to time,
                         "uuid" to uuid,
+                        "long" to long,
+                        "string" to string,
                     ),
                 ),
             )
@@ -174,6 +180,20 @@ class DataTypesTest {
         val value = UUID.fromString("44ebc207-bb46-401c-8487-62504e1c3be2")
         insertAndAssert(uuid = value) { row ->
             assertEquals(value, row.uuid("val_uuid"))
+        }
+    }
+
+    @JvmInline
+    value class FooId(
+        val id: Long,
+    ) : SqlValued<Long> {
+        override fun sqlValue() = id
+    }
+
+    fun testStringSqlValued() {
+        val value = FooId(1L)
+        insertAndAssert(long = value) { row ->
+            assertEquals(value.id, row.long("val_long"))
         }
     }
 }
