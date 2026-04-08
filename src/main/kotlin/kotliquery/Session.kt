@@ -20,6 +20,8 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
 import java.time.ZonedDateTime
+import kotlin.reflect.KProperty1
+import kotlin.reflect.full.memberProperties
 
 /**
  * Database Session.
@@ -50,12 +52,18 @@ open class Session(
         }
     }
 
+    /*
+      Handles unwrapping of value classes and classes that are explicitly marked with a way to unwrap a single
+      value that represents the class in the database so the user does not have to explicitly unwrap e.g.
+      value classes and enums everywhere they are used.
+     */
     private fun unwrap(v: Any?): Any? =
         if (v == null) {
             null
         } else {
             when (v) {
-                is SqlValued<*> -> v.sqlValue()
+                is SqlValued<*> -> v.sqlValue
+                is Any if v::class.isValue -> (v::class.memberProperties.first() as KProperty1<Any, *>).get(v)
                 else -> v
             }
         }

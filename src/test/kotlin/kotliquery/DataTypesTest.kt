@@ -184,17 +184,28 @@ class DataTypesTest {
     }
 
     @JvmInline
-    value class FooId(
+    value class LongId(
         val id: Long,
-    ) : SqlValued<Long> {
-        override fun sqlValue() = id
-    }
+    )
 
     @Test
-    fun testLongSqlValued() {
-        val value = FooId(1L)
+    fun testLongValueClass() {
+        val value = LongId(1L)
         insertAndAssert(long = value) { row ->
             assertEquals(value.id, row.long("val_long"))
+        }
+    }
+
+    @JvmInline
+    value class StringValue(
+        val value: String,
+    )
+
+    @Test
+    fun testStringValueClass() {
+        val value = StringValue("foobar")
+        insertAndAssert(string = value) { row ->
+            assertEquals(value.value, row.string("val_string"))
         }
     }
 
@@ -204,14 +215,31 @@ class DataTypesTest {
         A("A"),
         ;
 
-        override fun sqlValue() = kode
+        override val sqlValue = kode
     }
 
     @Test
-    fun testStringSqlValued() {
+    fun testStringValuedEnum() {
         val value = Bar.A
         insertAndAssert(string = value) { row ->
             assertEquals(value.kode, row.string("val_string"))
+        }
+    }
+
+    enum class Xyzzy(
+        val kode: Long,
+    ) : SqlValued<Long> {
+        A(1),
+        ;
+
+        override val sqlValue = kode
+    }
+
+    @Test
+    fun testLongValuedEnum() {
+        val value = Xyzzy.A
+        insertAndAssert(long = value) { row ->
+            assertEquals(value.kode, row.long("val_long"))
         }
     }
 }

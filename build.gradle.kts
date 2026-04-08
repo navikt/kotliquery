@@ -29,6 +29,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     implementation("org.slf4j:slf4j-api:$slf4jApiVersion")
     implementation("com.zaxxer:HikariCP:$hikariCpVersion")
+    implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junit5Version")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:$junit5Version")
