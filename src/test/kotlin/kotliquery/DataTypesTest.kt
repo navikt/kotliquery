@@ -226,6 +226,20 @@ class DataTypesTest {
         }
     }
 
+    enum class Baz(
+        override val sqlValue: String,
+    ) : SqlValued<String> {
+        A("A"),
+    }
+
+    @Test
+    fun testStringValuedEnumSqlValueProperty() {
+        val value = Baz.A
+        insertAndAssert(string = value) { row ->
+            assertEquals(value.sqlValue, row.string("val_string"))
+        }
+    }
+
     enum class Xyzzy(
         val kode: Long,
     ) : SqlValued<Long> {
