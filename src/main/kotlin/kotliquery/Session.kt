@@ -70,39 +70,39 @@ open class Session(
 
     private fun PreparedStatement.setParam(
         idx: Int,
-        v: Any?,
+        value: Any?,
     ) {
-        if (v == null) {
+        if (value == null) {
             this.setObject(idx, null)
         } else {
-            val unwrappedValue = unwrap(v)
-            when (unwrappedValue) {
-                is String -> this.setString(idx, unwrappedValue)
-                is Byte -> this.setByte(idx, unwrappedValue)
-                is Boolean -> this.setBoolean(idx, unwrappedValue)
-                is Int -> this.setInt(idx, unwrappedValue)
-                is Long -> this.setLong(idx, unwrappedValue)
-                is Short -> this.setShort(idx, unwrappedValue)
-                is Double -> this.setDouble(idx, unwrappedValue)
-                is Float -> this.setFloat(idx, unwrappedValue)
-                is ZonedDateTime -> this.setTimestamp(idx, java.sql.Timestamp.from(unwrappedValue.toInstant()))
-                is OffsetDateTime -> this.setTimestamp(idx, java.sql.Timestamp.from(unwrappedValue.toInstant()))
-                is Instant -> this.setTimestamp(idx, java.sql.Timestamp.from(unwrappedValue))
-                is LocalDateTime -> this.setTimestamp(idx, java.sql.Timestamp.valueOf(unwrappedValue))
-                is LocalDate -> this.setDate(idx, java.sql.Date.valueOf(unwrappedValue))
-                is LocalTime -> this.setTime(idx, java.sql.Time.valueOf(unwrappedValue))
-                is java.sql.Timestamp -> this.setTimestamp(idx, unwrappedValue) // extends java.util.Date
-                is java.sql.Time -> this.setTime(idx, unwrappedValue)
-                is java.sql.Date -> this.setDate(idx, unwrappedValue)
-                is java.sql.SQLXML -> this.setSQLXML(idx, unwrappedValue)
-                is java.util.Date -> this.setTimestamp(idx, java.sql.Timestamp(unwrappedValue.time))
-                is ByteArray -> this.setBytes(idx, unwrappedValue)
-                is InputStream -> this.setBinaryStream(idx, unwrappedValue)
-                is BigDecimal -> this.setBigDecimal(idx, unwrappedValue)
-                is java.sql.Array -> this.setArray(idx, unwrappedValue)
-                is URL -> this.setURL(idx, unwrappedValue)
+            val v = unwrap(value)
+            when (v) {
+                is String -> this.setString(idx, v)
+                is Byte -> this.setByte(idx, v)
+                is Boolean -> this.setBoolean(idx, v)
+                is Int -> this.setInt(idx, v)
+                is Long -> this.setLong(idx, v)
+                is Short -> this.setShort(idx, v)
+                is Double -> this.setDouble(idx, v)
+                is Float -> this.setFloat(idx, v)
+                is ZonedDateTime -> this.setTimestamp(idx, java.sql.Timestamp.from(v.toInstant()))
+                is OffsetDateTime -> this.setTimestamp(idx, java.sql.Timestamp.from(v.toInstant()))
+                is Instant -> this.setTimestamp(idx, java.sql.Timestamp.from(v))
+                is LocalDateTime -> this.setTimestamp(idx, java.sql.Timestamp.valueOf(v))
+                is LocalDate -> this.setDate(idx, java.sql.Date.valueOf(v))
+                is LocalTime -> this.setTime(idx, java.sql.Time.valueOf(v))
+                is java.sql.Timestamp -> this.setTimestamp(idx, v) // extends java.util.Date
+                is java.sql.Time -> this.setTime(idx, v)
+                is java.sql.Date -> this.setDate(idx, v)
+                is java.sql.SQLXML -> this.setSQLXML(idx, v)
+                is java.util.Date -> this.setTimestamp(idx, java.sql.Timestamp(v.time))
+                is ByteArray -> this.setBytes(idx, v)
+                is InputStream -> this.setBinaryStream(idx, v)
+                is BigDecimal -> this.setBigDecimal(idx, v)
+                is java.sql.Array -> this.setArray(idx, v)
+                is URL -> this.setURL(idx, v)
                 // java.util.UUID should be set via setObject
-                else -> this.setObject(idx, unwrappedValue)
+                else -> this.setObject(idx, v)
             }
         }
     }
