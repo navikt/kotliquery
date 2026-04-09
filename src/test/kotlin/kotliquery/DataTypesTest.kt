@@ -36,7 +36,9 @@ class DataTypesTest {
                         val_ts timestamp,
                         val_date date,
                         val_time time,
-                        val_uuid uuid
+                        val_uuid uuid,
+                        val_long long,
+                        val_string varchar(255)
                     );
                     """.trimIndent(),
                 ),
@@ -50,6 +52,8 @@ class DataTypesTest {
         date: Any? = null,
         time: Any? = null,
         uuid: Any? = null,
+        long: Any? = null,
+        string: Any? = null,
         assertRowFn: (Row) -> Unit,
     ) {
         sessionOf(testDataSource).use { session ->
@@ -58,8 +62,8 @@ class DataTypesTest {
             session.execute(
                 queryOf(
                     """
-                    insert into session_test (val_tstz, val_ts, val_date, val_time, val_uuid) 
-                        values (:tstz, :ts, :date, :time, :uuid);
+                    insert into session_test (val_tstz, val_ts, val_date, val_time, val_uuid, val_long, val_string) 
+                        values (:tstz, :ts, :date, :time, :uuid, :long, :string);
                     """.trimIndent(),
                     mapOf(
                         "tstz" to tstz,
@@ -67,6 +71,8 @@ class DataTypesTest {
                         "date" to date,
                         "time" to time,
                         "uuid" to uuid,
+                        "long" to long,
+                        "string" to string,
                     ),
                 ),
             )
@@ -174,6 +180,80 @@ class DataTypesTest {
         val value = UUID.fromString("44ebc207-bb46-401c-8487-62504e1c3be2")
         insertAndAssert(uuid = value) { row ->
             assertEquals(value, row.uuid("val_uuid"))
+        }
+    }
+
+    @JvmInline
+    value class LongId(
+        val id: Long,
+    )
+
+    @Test
+    fun testLongValueClass() {
+        val value = LongId(1L)
+        insertAndAssert(long = value) { row ->
+            assertEquals(value.id, row.long("val_long"))
+        }
+    }
+
+    @JvmInline
+    value class StringValue(
+        val value: String,
+    )
+
+    @Test
+    fun testStringValueClass() {
+        val value = StringValue("foobar")
+        insertAndAssert(string = value) { row ->
+            assertEquals(value.value, row.string("val_string"))
+        }
+    }
+
+    enum class Bar(
+        val kode: String,
+    ) : SqlValued<String> {
+        A("A"),
+        ;
+
+        override val sqlValue = kode
+    }
+
+    @Test
+    fun testStringValuedEnum() {
+        val value = Bar.A
+        insertAndAssert(string = value) { row ->
+            assertEquals(value.kode, row.string("val_string"))
+        }
+    }
+
+    enum class Baz(
+        override val sqlValue: String,
+    ) : SqlValued<String> {
+        A("A"),
+    }
+
+    @Test
+    fun testStringValuedEnumSqlValueProperty() {
+        val value = Baz.A
+        insertAndAssert(string = value) { row ->
+            assertEquals(value.sqlValue, row.string("val_string"))
+        }
+    }
+
+    enum class Xyzzy(
+        val kode: Long,
+    ) : SqlValued<Long> {
+        A(1),
+        ;
+
+        override val sqlValue = kode
+    }
+
+    @Test
+    fun testLongValuedEnum() {
+        val value = Xyzzy.A
+        insertAndAssert(long = value) { row ->
+            assertEquals(value.kode, row.long("val_long"))
         }
     }
 }
