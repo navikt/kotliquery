@@ -42,3 +42,44 @@ fun <A : AutoCloseable, R> using(
     closeable: A?,
     f: (A) -> R,
 ): R = LoanPattern.using(closeable, f)
+
+/**
+ * Opens a [Session] from this [DataSource], executes [block] with the session as receiver,
+ * and closes the session afterwards.
+ *
+ * ```kotlin
+ * dataSource.withSession {
+ *     run(queryOf("select id from members").map { row -> row.int("id") }.asList)
+ * }
+ * ```
+ */
+fun <A> DataSource.withSession(
+    returnGeneratedKey: Boolean = false,
+    strict: Boolean = false,
+    queryTimeout: Int? = null,
+    block: Session.() -> A,
+): A = sessionOf(this, returnGeneratedKey, strict, queryTimeout).use(block)
+
+/**
+ * Opens a [Session], starts a transaction, executes [block] with the [TransactionalSession]
+ * as receiver, commits on success, rolls back on exception, and closes the session afterwards.
+ *
+ * Combines session creation and transaction handling into a single call, reducing nesting.
+ *
+ * The [TransactionalSession] can be passed to other classes to share the transaction:
+ * ```kotlin
+ * dataSource.transaction {
+ *     userRepo.save(this, user)
+ *     orderRepo.save(this, order)
+ * }
+ * ```
+ */
+fun <A> DataSource.transaction(
+    returnGeneratedKey: Boolean = false,
+    strict: Boolean = false,
+    queryTimeout: Int? = null,
+    block: TransactionalSession.() -> A,
+): A =
+    sessionOf(this, returnGeneratedKey, strict, queryTimeout).use { session ->
+        session.transaction { tx -> tx.block() }
+    }
