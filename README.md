@@ -235,6 +235,7 @@ Siden dette biblioteket har noen bestemte meninger, er transaksjoner kun tilgjen
 ## Dokumentasjon
 
 - **[Type-safe SQL DSL](dokumentasjon/dsl.md)** - Bygg SQL-spørringer med Kotlin-funksjoner i stedet for rå SQL-strenger
+- **[Repository](dokumentasjon/repository.md)** - Annotasjonsbaserte repositories og Spring Data-inspirert CrudRepository
 - **[Vedlikehold](dokumentasjon/vedlikehold.md)** - Hvordan lage releases og vedlikeholde prosjektet
 - **[Release Quick Start](dokumentasjon/release-quick-start.md)** - Rask guide for å lage en ny release
 
