@@ -24,9 +24,11 @@ The main entry point for all database operations. Every query flows through Sess
 - `batchPreparedNamedStatementAndReturnGeneratedKeys(...)` → `List<Long>` — batch named + keys
 - `createArrayOf(typeName, items)` → `java.sql.Array` — delegate to JDBC
 - `transaction { tx -> }` — block-scoped transaction with auto-commit/rollback
-- `close()` — closes connection
+- `close()` — closes connection (skips if participating in external transaction)
 
 **Internal mechanics:**
+- `transactionContext` — **new** — thread-local state for transparent transactions
+- `checkActive()` — guard to ensure session isn't used after completion
 - `createPreparedStatement(query)` — builds `PreparedStatement` from `Query`, handles `returnGeneratedKeys` and Oracle driver workaround
 - `populateParams(query, stmt)` — binds params via `setTypedParam`, handles both named (`replacementMap`) and positional (`params`) binding
 - `unwrap(v)` — **critical** — unwraps `SqlValued<T>` and Kotlin value classes to their raw JDBC values using `kotlin-reflect`
@@ -81,10 +83,21 @@ Data class wrapping `java.sql.ResultSet`. Implements `Sequence<Row>` for iterati
 
 Thin data class around `java.sql.Connection`.
 
-- `begin()` — `autoCommit=false`, `isReadOnly=false` (unless JTA)
+- `begin(readOnly, isolation)` — `autoCommit=false`. Supports read-only mode and custom isolation levels.
 - `commit()` — `commit()`, then `autoCommit=true`
 - `rollback()` — `rollback()`, then tries `autoCommit=true` (swallows SQLException)
 - `close()` — delegates to underlying
+
+### TransactionManager.kt — Resource Management (~40 lines)
+
+Manages thread-local DataSource→Connection binding using `IdentityHashMap`.
+
+- `TransactionContext` — data class holding connection, active flag, and settings (readOnly, isolation)
+- `getResource(dataSource)` / `bindResource(dataSource, context)` / `unbindResource(dataSource)`
+
+### TransactionIsolation.kt — Isolation Levels (~10 lines)
+
+Enum mapping to `java.sql.Connection` constants: `READ_UNCOMMITTED`, `READ_COMMITTED`, `REPEATABLE_READ`, `SERIALIZABLE`.
 
 ### Parameter.kt — Typed JDBC Binding (~41 lines)
 
@@ -110,18 +123,19 @@ Implement this on enums or classes to control what value gets bound to JDBC. Ses
 
 ### TransactionalSession.kt — Transaction Context (~11 lines)
 
-Minimal subclass of Session. Only exists to give a distinct type inside `session.transaction { tx -> }`. Same API, no additional logic. Does NOT pass `queryTimeout` to parent.
+Minimal subclass of Session. Only exists to give a distinct type inside `session.transaction { tx -> }`. Same API. Passes `queryTimeout` to parent constructor.
 
 ### LoanPattern.kt — Auto-Close Helper (~21 lines)
 
 `using(closeable, f)` — executes block, always closes resource in `finally`. Throws `IllegalStateException` if resource is null.
 
-### package.kt — Top-Level Factories (~44 lines)
+### package.kt — Top-Level Factories (~55 lines)
 
 - `queryOf(statement, vararg params)` → `Query`
 - `queryOf(statement, paramMap)` → `Query`
-- `sessionOf(url, user, pass, returnGeneratedKey=false, strict=false, queryTimeout=null)` → `Session`
-- `sessionOf(dataSource, returnGeneratedKey=false, strict=false, queryTimeout=null)` → `Session`
+- `sessionOf(...)` — returns existing thread-local session if available via `TransactionManager`
+- `DataSource.transaction(...)` — starts transaction, binds to thread-local, handles commit/rollback and cleanup
+- `DataSource.withSession { ... }` — convenience for `using(sessionOf(this)) { ... }`
 - `using(closeable, f)` — delegates to `LoanPattern.using`
 
 **Note**: `sessionOf()` defaults `returnGeneratedKey=false`, but `Session` constructor defaults `returnGeneratedKeys=true`. This is intentional.

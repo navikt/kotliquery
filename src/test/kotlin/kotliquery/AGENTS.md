@@ -11,6 +11,7 @@
 | File | Purpose | Lines |
 |---|---|---|
 | `UsageTest.kt` | End-to-end: sessions, actions, transactions, batch, strict mode, query timeout, HikariCP | ~566 |
+| `TransactionSharingTest.kt` | Transparent transactions: thread-local sharing, nested calls, readOnly/isolation propagation, suppressed exceptions | ~200 |
 | `NamedParamTest.kt` | Named parameter regex parsing: extraction, repeated params, edge cases (timestamps, `::` casts) | ~73 |
 | `DataTypesTest.kt` | Round-trip for all supported types: temporal, UUID, value classes, `SqlValued` enums | ~259 |
 | `test-package.kt` | Shared test infrastructure: `testDataSource`, helpers | ~32 |
@@ -129,7 +130,10 @@ fun String.extractQueryFromPreparedStmt() = this.replace(Regex("^.*?: "), "").no
 - PostgreSQL `::` cast not confused as named params (`'2018-01-01'::DATE`)
 - Strict mode throwing on duplicate rows
 - Transaction rollback on exception
-- Transaction with non-labeled return (still commits)
+- Transparent transaction sharing via thread-local DataSource binding
+- Nested `transaction` / `withSession` / `sessionOf` calls in same thread
+- Transaction settings (readOnly, isolation) propagation
+- Preserving original exceptions when cleanup fails (suppressed exceptions)
 - Transaction inside coroutine scope (`runBlocking { session.transaction { } }`)
 - Query timeout propagation to PreparedStatement
 - Value class unwrapping (Long, String)

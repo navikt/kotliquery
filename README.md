@@ -224,7 +224,18 @@ dataSource.transaction {
 
 Transaksjonen bekreftes automatisk ved suksess, og rulles tilbake ved unntak. Du trenger ingen ekstra nøsting — `this` inne i blokken er en `TransactionalSession`.
 
-Du kan også bruke `session.transaction` direkte hvis du allerede har en sesjon:
+KotliQuery støtter nå en **transparent transaksjonsmodell**. Dette betyr at alle kall til `dataSource.withSession { ... }` eller `sessionOf(dataSource)` som skjer inne i en `dataSource.transaction { ... }`-blokk på samme DataSource, automatisk vil delta i den aktive transaksjonen i stedet for å åpne en ny sesjon.
+
+```kotlin
+// Alle disse vil automatisk bruke den pågående transaksjonen
+dataSource.transaction {
+    dataSource.withSession {
+        run(queryOf("insert into members ...").asUpdate)
+    }
+}
+```
+
+Du kan også bruke den eksplisitte varianten `session.transaction` hvis du allerede har en sesjon:
 
 ```kotlin
 session.transaction { tx ->
@@ -232,9 +243,54 @@ session.transaction { tx ->
 }
 ```
 
+#### Transaksjonsinnstillinger
+
+Du kan finjustere transaksjonen ved å sende med valgfrie parametere:
+
+```kotlin
+// Skrivebeskyttet transaksjon
+dataSource.transaction(readOnly = true) {
+    run(queryOf("select ...").map { ... }.asList)
+}
+
+// Isolasjonsnivå
+dataSource.transaction(isolation = TransactionIsolation.SERIALIZABLE) {
+    // ...
+}
+
+// Kontrollert tilbakerulling
+dataSource.transaction(noRollbackFor = setOf(BusinessException::class)) {
+    // BusinessException fører til commit, andre unntak til rollback
+}
+```
+
 #### Dele transaksjoner mellom klasser
 
-Ofte vil du at operasjoner i forskjellige klasser (f.eks. repositories) skal skje i samme transaksjon. Siden `TransactionalSession` arver fra `Session`, kan repositories ganske enkelt akseptere `Session` som parameter:
+Med den transparente transaksjonsmodellen kan repositories ta inn en `DataSource` i stedet for en `Session`. De vil da automatisk delta i transaksjoner når de kalles innenfor en `transaction`-blokk:
+
+```kotlin
+class MemberRepository(private val dataSource: DataSource) {
+    fun insert(name: String): Int =
+        dataSource.withSession {
+            run(queryOf("insert into members (name, created_at) values (?, ?)", name, Date()).asUpdate)
+        }
+}
+
+class AuditRepository(private val dataSource: DataSource) {
+    fun log(message: String): Int =
+        dataSource.withSession {
+            run(queryOf("insert into audit_log (message) values (?)", message).asUpdate)
+        }
+}
+
+// Alt skjer i samme transaksjon:
+dataSource.transaction {
+    memberRepo.insert("Alice")
+    auditRepo.log("la til Alice")
+}
+```
+
+For bakoverkompatibilitet kan du fortsatt sende `Session` eksplisitt hvis du foretrekker det. Siden `TransactionalSession` arver fra `Session`, fungerer dette på samme måte som før:
 
 ```kotlin
 class MemberRepository {
@@ -242,15 +298,9 @@ class MemberRepository {
         session.run(queryOf("insert into members (name, created_at) values (?, ?)", name, Date()).asUpdate)
 }
 
-class AuditRepository {
-    fun log(session: Session, message: String): Int =
-        session.run(queryOf("insert into audit_log (message) values (?)", message).asUpdate)
-}
-
-// Alt skjer i samme transaksjon:
+// Eksplisitt deling (this er en Session i transaksjonsblokken)
 dataSource.transaction {
     memberRepo.insert(this, "Alice")
-    auditRepo.log(this, "la til Alice")
 }
 ```
 

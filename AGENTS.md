@@ -51,6 +51,8 @@ kotliquery/
 │   ├── Connection.kt                  ← java.sql.Connection wrapper
 │   ├── Parameter.kt                   ← typed JDBC parameter binding
 │   ├── SqlValued.kt                   ← interface for custom SQL representation
+│   ├── TransactionManager.kt          ← thread-local transaction context
+│   ├── TransactionIsolation.kt        ← transaction isolation levels
 │   ├── HikariCP.kt                    ← connection pool management
 │   ├── LoanPattern.kt                 ← auto-close resource pattern
 │   ├── TransactionalSession.kt        ← Session subclass for transactions
