@@ -3,6 +3,9 @@ package kotliquery
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import kotliquery.threadlocal.TransactionManager
+import kotliquery.threadlocal.transaction
+import kotliquery.threadlocal.withSession
 import java.util.Date
 
 class TransactionSharingTest :
@@ -142,14 +145,11 @@ class TransactionSharingTest :
                 testDataSource.withSession { run(countMembers) } shouldBe 1
             }
 
-            test("sessionOf joins existing transaction") {
+            test("withSession joins existing transaction") {
                 testDataSource.transaction {
                     run(queryOf(insert, "Alice", Date()).asUpdate)
 
-                    val count =
-                        sessionOf(testDataSource).use { s ->
-                            s.run(countMembers)
-                        }
+                    val count = testDataSource.withSession { run(countMembers) }
                     count shouldBe 1
                 }
             }

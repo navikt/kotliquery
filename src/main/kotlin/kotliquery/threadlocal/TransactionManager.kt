@@ -1,5 +1,8 @@
-package kotliquery
+package kotliquery.threadlocal
 
+import kotliquery.Connection
+import kotliquery.ManagedTransactionContext
+import kotliquery.TransactionIsolation
 import java.util.IdentityHashMap
 import javax.sql.DataSource
 
@@ -7,10 +10,10 @@ import javax.sql.DataSource
  * Manages thread-local transaction binding between [DataSource] instances and their
  * active transactional [Connection].
  *
- * When a [DataSource.transaction] block is entered, the connection is bound to the current
- * thread. Subsequent calls to [sessionOf] or [DataSource.withSession] on the same [DataSource]
- * within that thread automatically join the existing transaction — repositories do not need
- * to receive a [Session] parameter.
+ * When a [DataSource.transaction][kotliquery.threadlocal.transaction] block is entered,
+ * the connection is bound to the current thread. Subsequent calls to
+ * [withSession][kotliquery.threadlocal.withSession] on the same [DataSource] automatically
+ * join the existing transaction — repositories do not need to receive a Session parameter.
  *
  * Uses [IdentityHashMap] so that binding is based on the exact [DataSource] object reference,
  * not [equals]/[hashCode]. This avoids surprises with wrapped or proxied DataSource instances.
@@ -21,9 +24,9 @@ object TransactionManager {
         val readOnly: Boolean,
         val isolation: TransactionIsolation?,
         val noRollbackFor: Set<Class<out Throwable>>,
-    ) {
+    ) : ManagedTransactionContext {
         @Volatile
-        var active: Boolean = true
+        override var active: Boolean = true
             internal set
     }
 
