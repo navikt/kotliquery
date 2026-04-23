@@ -16,6 +16,12 @@ repositories {
     mavenCentral()
 }
 
+ktlint {
+    filter {
+        exclude("**/kotliquery/context/**")
+    }
+}
+
 val kotlinVersion = "2.3.20"
 val slf4jApiVersion = "2.0.17"
 val hikariCpVersion = "7.0.2"
@@ -52,6 +58,9 @@ tasks {
 
     withType<KotlinCompile>().configureEach {
         dependsOn("ktlintFormat")
+        compilerOptions {
+            freeCompilerArgs.add("-Xcontext-parameters")
+        }
     }
 
     withType<Test>().configureEach {
