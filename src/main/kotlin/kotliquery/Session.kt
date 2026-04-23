@@ -34,7 +34,7 @@ open class Session(
     open val strict: Boolean = false,
     open val queryTimeout: Int? = null,
 ) : Closeable {
-    internal var transactionContext: TransactionManager.TransactionContext? = null
+    internal var transactionContext: ManagedTransactionContext? = null
 
     override fun close() {
         transactional = false
