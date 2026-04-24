@@ -17,6 +17,19 @@ data class Connection(
         }
     }
 
+    fun begin(
+        readOnly: Boolean,
+        isolation: TransactionIsolation?,
+    ) {
+        underlying.autoCommit = false
+        if (!jtaCompatible) {
+            underlying.isReadOnly = readOnly
+        }
+        if (isolation != null) {
+            underlying.transactionIsolation = isolation.level
+        }
+    }
+
     fun commit() {
         underlying.commit()
         underlying.autoCommit = true

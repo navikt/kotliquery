@@ -3,9 +3,6 @@ package kotliquery
 import java.sql.DriverManager
 import javax.sql.DataSource
 
-/**
- * Builds Query object.
- */
 fun queryOf(
     statement: String,
     vararg params: Any?,
@@ -16,9 +13,6 @@ fun queryOf(
     paramMap: Map<String, Any?>,
 ): Query = Query(statement, paramMap = paramMap)
 
-/**
- * Builds Session object.
- */
 fun sessionOf(
     url: String,
     user: String,

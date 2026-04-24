@@ -213,21 +213,116 @@ session.forEach(queryOf("select id from members")) { row ->
 
 #### Transaksjon
 
-Det er selvfølgelig mulig å kjøre spørringer i en transaksjon! `Session`-objektet gir en måte å starte en transaksjon på i en bestemt kodeblokk.
+Det er selvfølgelig mulig å kjøre spørringer i en transaksjon! Den enkleste måten er å bruke `transaction`-utvidelsen direkte på en `DataSource`:
+
+```kotlin
+dataSource.transaction {
+    run(queryOf("insert into members (name, created_at) values (?, ?)", "Alice", Date()).asUpdate)
+    run(queryOf("insert into members (name, created_at) values (?, ?)", "Bob", Date()).asUpdate)
+}
+```
+
+Transaksjonen bekreftes automatisk ved suksess, og rulles tilbake ved unntak. Du trenger ingen ekstra nøsting — `this` inne i blokken er en `TransactionalSession`.
+
+KotliQuery støtter nå en **transparent transaksjonsmodell**. Dette betyr at alle kall til `dataSource.withSession { ... }` eller `sessionOf(dataSource)` som skjer inne i en `dataSource.transaction { ... }`-blokk på samme DataSource, automatisk vil delta i den aktive transaksjonen i stedet for å åpne en ny sesjon.
+
+```kotlin
+// Alle disse vil automatisk bruke den pågående transaksjonen
+dataSource.transaction {
+    dataSource.withSession {
+        run(queryOf("insert into members ...").asUpdate)
+    }
+}
+```
+
+Du kan også bruke den eksplisitte varianten `session.transaction` hvis du allerede har en sesjon:
 
 ```kotlin
 session.transaction { tx ->
-  // start
-  tx.run(queryOf("insert into members (name,  created_at) values (?, ?)", "Alice", Date()).asUpdate)
-}
-// bekreft
-
-session.transaction { tx ->
-  // start
-  tx.run(queryOf("update members set name = ? where id = ?", "Chris", 1).asUpdate)
-  throw RuntimeException() // rull tilbake
+    tx.run(queryOf("insert into members (name, created_at) values (?, ?)", "Alice", Date()).asUpdate)
 }
 ```
+
+#### Transaksjonsinnstillinger
+
+Du kan finjustere transaksjonen ved å sende med valgfrie parametere:
+
+```kotlin
+// Skrivebeskyttet transaksjon
+dataSource.transaction(readOnly = true) {
+    run(queryOf("select ...").map { ... }.asList)
+}
+
+// Isolasjonsnivå
+dataSource.transaction(isolation = TransactionIsolation.SERIALIZABLE) {
+    // ...
+}
+
+// Kontrollert tilbakerulling
+dataSource.transaction(noRollbackFor = setOf(BusinessException::class)) {
+    // BusinessException fører til commit, andre unntak til rollback
+}
+```
+
+#### Dele transaksjoner mellom klasser
+
+Med den transparente transaksjonsmodellen kan repositories ta inn en `DataSource` i stedet for en `Session`. De vil da automatisk delta i transaksjoner når de kalles innenfor en `transaction`-blokk:
+
+```kotlin
+class MemberRepository(private val dataSource: DataSource) {
+    fun insert(name: String): Int =
+        dataSource.withSession {
+            run(queryOf("insert into members (name, created_at) values (?, ?)", name, Date()).asUpdate)
+        }
+}
+
+class AuditRepository(private val dataSource: DataSource) {
+    fun log(message: String): Int =
+        dataSource.withSession {
+            run(queryOf("insert into audit_log (message) values (?)", message).asUpdate)
+        }
+}
+
+// Alt skjer i samme transaksjon:
+dataSource.transaction {
+    memberRepo.insert("Alice")
+    auditRepo.log("la til Alice")
+}
+```
+
+For bakoverkompatibilitet kan du fortsatt sende `Session` eksplisitt hvis du foretrekker det. Siden `TransactionalSession` arver fra `Session`, fungerer dette på samme måte som før:
+
+```kotlin
+class MemberRepository {
+    fun insert(session: Session, name: String): Int =
+        session.run(queryOf("insert into members (name, created_at) values (?, ?)", name, Date()).asUpdate)
+}
+
+// Eksplisitt deling (this er en Session i transaksjonsblokken)
+dataSource.transaction {
+    memberRepo.insert(this, "Alice")
+}
+```
+
+Hvis noe feiler, rulles alle operasjoner tilbake — uavhengig av hvilken klasse som utførte dem.
+
+#### Enklere sesjoner med withSession
+
+For å slippe `using(sessionOf(...))`-mønsteret kan du bruke `withSession`-utvidelsen på `DataSource`:
+
+```kotlin
+// Før:
+using(sessionOf(dataSource)) { session ->
+    session.run(queryOf("select id from members").map { row -> row.int("id") }.asList)
+}
+
+// Etter:
+dataSource.withSession {
+    run(queryOf("select id from members").map { row -> row.int("id") }.asList)
+}
+```
+
+Sesjonen lukkes automatisk når blokken er ferdig.
 
 Siden dette biblioteket har noen bestemte meninger, er transaksjoner kun tilgjengelige med en kodeblokk. Vi støtter bevisst ikke `begin` / `commit`-metoder. Hvis du av en eller annen grunn ønsker å håndtere tilstanden til en transaksjon manuelt, kan du bruke `session.connection.commit()` / `session.connection.rollback()` for det.
 
@@ -235,7 +330,7 @@ Siden dette biblioteket har noen bestemte meninger, er transaksjoner kun tilgjen
 ## Dokumentasjon
 
 - **[Vedlikehold](dokumentasjon/vedlikehold.md)** - Hvordan lage releases og vedlikeholde prosjektet
-- **[Release Quick Start](dokumentasjon/release-quick-start.md)** - Rask guide for å lage en ny release
+- **[Transaksjoner og sesjoner](dokumentasjon/transaksjoner.md)** - Utvidet guide for transaksjoner, deling mellom klasser og sesjonsforenkling
 
 ## Spørsmål
 
