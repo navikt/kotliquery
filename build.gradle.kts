@@ -24,6 +24,7 @@ val kotlinxCoroutinesVersion = "1.8.1"
 val h2DatabaseVersion = "2.4.240"
 val logbackClassicVersion = "1.5.32"
 val kotlinxCoroutinesCoreVersion = "1.10.2"
+val kotestVersion = "6.1.0"
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
@@ -37,6 +38,8 @@ dependencies {
     testImplementation("com.h2database:h2:$h2DatabaseVersion")
     testImplementation("ch.qos.logback:logback-classic:$logbackClassicVersion")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinxCoroutinesCoreVersion")
+    testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
+    testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
 }
 
 kotlin {
