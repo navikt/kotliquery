@@ -23,7 +23,7 @@ val junit5Version = "6.0.3"
 val kotlinxCoroutinesVersion = "1.8.1"
 val h2DatabaseVersion = "2.4.240"
 val logbackClassicVersion = "1.5.32"
-val kotlinxCoroutinesCoreVersion = "1.10.2"
+val kotlinxCoroutinesCoreVersion = "1.11.0"
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
