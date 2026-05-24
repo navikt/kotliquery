@@ -9,7 +9,6 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
       packages: write
     steps:
       - name: Harden Runner
@@ -31,9 +30,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # ratchet:gradle/actions/setup-gradle@v6.1.0
         with:
-          dependency-graph: generate-and-submit
-          cache-read-only: true
-          cache-disabled: true
+          cache-provider: basic
 
       - name: Build and publish
         run: ./gradlew clean build publish --configuration-cache
