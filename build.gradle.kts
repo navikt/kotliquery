@@ -26,7 +26,6 @@ val logbackClassicVersion = "1.5.32"
 val kotlinxCoroutinesCoreVersion = "1.11.0"
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     implementation("org.slf4j:slf4j-api:$slf4jApiVersion")
     implementation("com.zaxxer:HikariCP:$hikariCpVersion")
     implementation("org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion")
