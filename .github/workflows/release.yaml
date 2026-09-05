@@ -1,4 +1,4 @@
-name: Build & Publish
+name: Release
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  create-release:
+  release:
     needs: build-and-publish
     runs-on: ubuntu-latest
     permissions:
@@ -54,28 +54,17 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Generate Release Notes
-        id: release_notes
-        env:
-          REF_NAME: ${{ github.ref_name }}
-          REPO: ${{ github.repository }}
-        run: |
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${REF_NAME}"^ 2>/dev/null || echo "")
-
-          NOTES="## What's Changed\n\n"
-          NOTES="${NOTES}$(git log "${PREVIOUS_TAG}..${REF_NAME}" --pretty=format:'* %s (%h)' --reverse)\n\n"
-          NOTES="${NOTES}**Full Changelog**: https://github.com/${REPO}/compare/${PREVIOUS_TAG}...${REF_NAME}"
-
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo -e "$NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REF_NAME: ${{ github.ref_name }}
-          RELEASE_NOTES: ${{ steps.release_notes.outputs.notes }}
         run: |
-          gh release create "${REF_NAME}" \
-            --title "${REF_NAME}" \
-            --notes "${RELEASE_NOTES}"
+          set -euo pipefail
+
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${REF_NAME}"^ 2>/dev/null || true)
+          ARGS=(--title "${REF_NAME}" --generate-notes --verify-tag)
+          if [ -n "${PREVIOUS_TAG}" ]; then
+            ARGS+=(--notes-start-tag "${PREVIOUS_TAG}")
+          fi
+
+          gh release create "${REF_NAME}" "${ARGS[@]}"
