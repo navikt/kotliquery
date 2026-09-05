@@ -3,7 +3,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.3.21"
+    kotlin("jvm") version "2.4.10"
     id("org.jlleitschuh.gradle.ktlint") version "14.2.0"
     id("org.jetbrains.kotlinx.kover") version "0.9.9"
     `maven-publish`
@@ -16,13 +16,13 @@ repositories {
     mavenCentral()
 }
 
-val kotlinVersion = "2.3.21"
+val kotlinVersion = "2.4.10"
 val slf4jApiVersion = "2.0.18"
 val hikariCpVersion = "7.1.0"
-val junit5Version = "6.1.2"
+val junit5Version = "6.1.3"
 val kotlinxCoroutinesVersion = "1.8.1"
 val h2DatabaseVersion = "2.4.240"
-val logbackClassicVersion = "1.5.38"
+val logbackClassicVersion = "1.6.3"
 val kotlinxCoroutinesCoreVersion = "1.11.0"
 
 dependencies {
