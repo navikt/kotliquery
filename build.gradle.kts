@@ -17,7 +17,7 @@ repositories {
 }
 
 val kotlinVersion = "2.4.10"
-val slf4jApiVersion = "2.0.18"
+val slf4jApiVersion = "2.0.19"
 val hikariCpVersion = "7.1.0"
 val junit5Version = "6.1.3"
 val kotlinxCoroutinesVersion = "1.8.1"
