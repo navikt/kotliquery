@@ -35,6 +35,6 @@ jobs:
         uses: github/codeql-action/autobuild@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # ratchet:github/codeql-action/autobuild@v4.37.8
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # ratchet:github/codeql-action/analyze@v4.37.8
+        uses: github/codeql-action/analyze@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # ratchet:github/codeql-action/analyze@v4.38.0
         with:
           category: "/language:kotlin"
