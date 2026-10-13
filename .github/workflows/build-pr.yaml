@@ -2,17 +2,6 @@ name: Build & test PR
 
 on:
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'LICENCE'
-      - 'CODEOWNERS'
-      - '.gitignore'
-      - '.scripts'
-      - 'dokumentasjon/**'
-      - '.github/workflows/build-publish.yaml'
-      - '.github/workflows/codeql-scan.yaml'
-      - '.github/workflows/release.yaml'
-      - '.github/dependabot.yaml'
 
 jobs:
   build-and-test:
